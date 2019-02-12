@@ -91,8 +91,8 @@ def logistic_regression_mini_batch_sgd_loss_ce(train_images, train_labels, epoch
             yi = train_labels_shuffled[i:i + batch_size]
             z = np.dot(weight.T, xi.T) + bias
             activation = sigmoid(z)
-            gradient_w = 1.0 / m * np.dot(xi.T, (activation - yi).T)
-            gradient_b = 1.0 / m * np.sum(activation - yi)
+            gradient_w = 1.0 / batch_size * np.dot(xi.T, (activation - yi).T)
+            gradient_b = 1.0 / batch_size * np.sum(activation - yi)
             weight = weight - lr * gradient_w
             bias = bias - lr * gradient_b
 
@@ -109,21 +109,23 @@ def logistic_regression_mini_batch_sgd_loss_se(train_images, train_labels, epoch
     m = train_images.shape[0]
     # n is the number of features
     n = train_images.shape[1]
+    # np.random.seed(42)
     weight = np.zeros((n, 1))
     bias = 0
 
     for epoch in range(epochs):
         shuffled_indices = np.random.permutation(m)
         train_images_shuffled = train_images[shuffled_indices]
-        train_labels_shuffled = train_labels[shuffled_indices]
+        train_labels_shuffled = modified_train_labels[shuffled_indices]
         for i in range(0, m, batch_size):
             xi = train_images_shuffled[i:i + batch_size]
             yi = train_labels_shuffled[i:i + batch_size]
             z = np.dot(weight.T, xi.T) + bias
             activation = sigmoid(z)
+
             b = (activation - yi) * activation * (1 - activation)
-            gradient_w = 1.0 / m * np.dot(xi.T, b.T)
-            gradient_b = 1.0 / m * np.sum(b)
+            gradient_w = 1.0 / batch_size * np.dot(xi.T, b.T)
+            gradient_b = 1.0 / batch_size * np.sum(b)
             weight = weight - lr * gradient_w
             bias = bias - lr * gradient_b
 
@@ -174,36 +176,52 @@ def new_accuracy(weight, bias, test_images, test_labels, target_label):
     test_accuracy = 100 - np.mean(np.abs(test_predictions - modified_test_labels) * 100)
     return test_accuracy
 
+def mapping_grey_scale_to_01(input_images):
+    return np.ceil(input_images)
 
-def mnist_classifier():
-    # loading mnist data
-    (train_images_original, train_labels_original), (test_images_original, test_labels_original) = mnist.load_data()
+def number_of_regions(input_image):
+    rounded_input_images = mapping_grey_scale_to_01(input_image)
+    return dfs(rounded_input_images, 0)
 
-    # normalizing the input
-    train_images = train_images_original.reshape((60000, 28 * 28))
-    train_images = train_images.astype('float32') / 255
-    # modified_train_labels = np.zeros(len(train_labels))
 
-    test_images = test_images_original.reshape((10000, 28 * 28))
-    test_images = test_images.astype('float32') / 255
+def dfs(input_image, start, visited=None):
+    if visited is None:
+        visited = set()
 
+    visited.add(start)
+    neighbors = set()
+
+    if (start + 1) % 28 != 0:
+        neighbors.add(start + 1)
+    if start % 28 != 0:
+        neighbors.add(start - 1)
+    if start < 756:
+        neighbors.add(start + 28)
+    if start > 27:
+        neighbors.add(start - 28)
+
+    for neighbor in neighbors - visited:
+        dfs(input_image, neighbor, visited)
+    return visited
+
+
+def problem_1(train_images, train_labels_original, test_images, test_labels_original):
     # store weights and biases for each classifier
     weights = []
     biases = []
-
     for i in range(10):
         target_number = i
 
         weight, bias = logistic_regression_mini_batch_sgd_loss_ce(train_images, train_labels_original, 100, 1,
-                                                                  target_number, 128)
+                                                                  target_number, 512)
         weights.append(weight)
         biases.append(bias)
 
-        print("done classifier: ", i)
-        # print("training set: new accuracy for number ", target_number, ": ",
-        #       new_accuracy(weight, bias, train_images, train_labels_original, target_number))
-        # print("test set: new accuracy for number ", target_number, ": ",
-        #       new_accuracy(weight, bias, test_images, test_labels_original, target_number))
+        # print("done classifier: ", i)
+        print("training set: new accuracy for number ", target_number, ": ",
+              new_accuracy(weight, bias, train_images, train_labels_original, target_number))
+        print("test set: new accuracy for number ", target_number, ": ",
+              new_accuracy(weight, bias, test_images, test_labels_original, target_number))
         # print("accuracy for number ", target_number, ": ",
         #       calculate_accuracy(weight, bias, train_images, train_labels_original, target_number))
 
@@ -217,4 +235,62 @@ def mnist_classifier():
     print("accuracy: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
 
 
+def problem_2(train_images, train_labels_original, test_images, test_labels_original):
+    # store weights and biases for each classifier
+    weights = []
+    biases = []
+    for i in range(10):
+        target_number = i
+
+        weight, bias = logistic_regression_mini_batch_sgd_loss_se(train_images, train_labels_original, 100, 1,
+                                                                  target_number, 512)
+        weights.append(weight)
+        biases.append(bias)
+
+        # print("done classifier: ", i)
+        print("training set: new accuracy for number ", target_number, ": ",
+              new_accuracy(weight, bias, train_images, train_labels_original, target_number))
+        print("test set: new accuracy for number ", target_number, ": ",
+              new_accuracy(weight, bias, test_images, test_labels_original, target_number))
+        # print("accuracy for number ", target_number, ": ",
+        #       calculate_accuracy(weight, bias, train_images, train_labels_original, target_number))
+
+        # print("accuracy for number ", target_number, ": ",
+        #       calculate_accuracy(weight, bias, test_images, test_labels_original, target_number))
+        # print(train_images.shape)
+        # print(train_labels_original.shape)
+
+    # print("original label: ", test_labels_original[:5], ", classified as ",
+    #       ten_digits_classifier(weights, biases, test_images[:5, :]))
+    print("accuracy: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
+
+
+def problem_3():
+    return
+
+
+def problem_4():
+    return
+
+
+def problem_5(train_images, train_labels_original, test_images, test_labels_original):
+    print(number_of_regions(train_images[0]))
+    return
+
+
+def mnist_classifier():
+    # loading mnist data
+    (train_images_original, train_labels_original), (test_images_original, test_labels_original) = mnist.load_data()
+
+    # normalizing the input
+    train_images = train_images_original.reshape((60000, 28 * 28))
+    train_images = train_images.astype('float32') / 255
+    # modified_train_labels = np.zeros(len(train_labels))
+
+    test_images = test_images_original.reshape((10000, 28 * 28))
+    test_images = test_images.astype('float32') / 255
+
+    problem_5(train_images, train_labels_original, test_images, test_labels_original)
+
+    problem_1(train_images, train_labels_original, test_images, test_labels_original)
 mnist_classifier()
