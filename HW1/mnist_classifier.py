@@ -190,7 +190,7 @@ def dfs(input_image, start, visited=None):
 
     visited.add(start)
     neighbors = set()
-
+    stack = [start]
     if (start + 1) % 28 != 0:
         neighbors.add(start + 1)
     if start % 28 != 0:
