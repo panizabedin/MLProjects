@@ -1,5 +1,15 @@
 from keras.datasets import mnist
 import numpy as np
+from pythonds.basic.stack import Stack
+import matplotlib.pyplot as plt
+import time
+from multiprocessing import Pool
+
+
+def show_image(image):
+    plt.imshow(image.reshape(28, 28))
+    plt.grid(None)
+    plt.show()
 
 
 def sigmoid(z):
@@ -176,32 +186,89 @@ def new_accuracy(weight, bias, test_images, test_labels, target_label):
     test_accuracy = 100 - np.mean(np.abs(test_predictions - modified_test_labels) * 100)
     return test_accuracy
 
+
 def mapping_grey_scale_to_01(input_images):
     return np.ceil(input_images)
 
-def number_of_regions(input_image):
+
+def number_of_regions_4_ways(input_image):
     rounded_input_images = mapping_grey_scale_to_01(input_image)
-    return dfs(rounded_input_images, 0)
+
+    black_pixels_indices = set(np.nonzero(rounded_input_images)[0])
+    white_pixels_indices = set(range(0, 28 * 28)) - black_pixels_indices
+
+    visited = black_pixels_indices
+    component_count = 0
+    while len(white_pixels_indices) > 0:
+        component_count += 1
+        visited = dfs_4_ways(input_image, white_pixels_indices.pop(), visited)
+        white_pixels_indices = white_pixels_indices - visited
+
+    return component_count
 
 
-def dfs(input_image, start, visited=None):
+def number_of_regions_8_ways(input_image):
+    rounded_input_images = mapping_grey_scale_to_01(input_image)
+
+    black_pixels_indices = set(np.nonzero(rounded_input_images)[0])
+    white_pixels_indices = set(range(0, 28 * 28)) - black_pixels_indices
+
+    visited = black_pixels_indices
+    component_count = 0
+    while len(white_pixels_indices) > 0:
+        component_count += 1
+        visited = dfs_8_ways(input_image, white_pixels_indices.pop(), visited)
+        white_pixels_indices = white_pixels_indices - visited
+
+    return component_count
+
+
+def dfs_4_ways(input_image, start, visited=None):
     if visited is None:
         visited = set()
 
     visited.add(start)
     neighbors = set()
-    stack = [start]
-    if (start + 1) % 28 != 0:
+    if (start + 1) % 28 != 0 and input_image[start] == input_image[start + 1]:
         neighbors.add(start + 1)
-    if start % 28 != 0:
+    if start % 28 != 0 and input_image[start] == input_image[start - 1]:
         neighbors.add(start - 1)
-    if start < 756:
+    if start < 756 and input_image[start] == input_image[start + 28]:
         neighbors.add(start + 28)
-    if start > 27:
+    if start > 27 and input_image[start] == input_image[start - 28]:
         neighbors.add(start - 28)
 
     for neighbor in neighbors - visited:
-        dfs(input_image, neighbor, visited)
+        dfs_4_ways(input_image, neighbor, visited)
+
+    return visited
+
+
+def dfs_8_ways(input_image, start, visited=None):
+    if visited is None:
+        visited = set()
+
+    visited.add(start)
+    neighbors = set()
+    if (start + 1) % 28 != 0 and input_image[start] == input_image[start + 1]:  # r
+        neighbors.add(start + 1)
+    if start % 28 != 0 and input_image[start] == input_image[start - 1]:  # l
+        neighbors.add(start - 1)
+    if start < 756 and input_image[start] == input_image[start + 28]:  # d
+        neighbors.add(start + 28)
+    if start > 27 and input_image[start] == input_image[start - 28]:  # u
+        neighbors.add(start - 28)
+    if start > 27 and (start + 1) % 28 != 0 and input_image[start] == input_image[start - 27]:  # ru
+        neighbors.add(start - 27)
+    if start > 27 and start % 28 != 0 and input_image[start] == input_image[start - 29]:  # lu
+        neighbors.add(start - 29)
+    if start < 756 and (start + 1) % 28 != 0 and input_image[start] == input_image[start + 29]:  # rd
+        neighbors.add(start + 29)
+    if start < 756 and start % 28 != 0 and input_image[start] == input_image[start + 27]:  # ld
+        neighbors.add(start + 27)
+    for neighbor in neighbors - visited:
+        dfs_8_ways(input_image, neighbor, visited)
+
     return visited
 
 
@@ -217,21 +284,12 @@ def problem_1(train_images, train_labels_original, test_images, test_labels_orig
         weights.append(weight)
         biases.append(bias)
 
-        # print("done classifier: ", i)
-        print("training set: new accuracy for number ", target_number, ": ",
-              new_accuracy(weight, bias, train_images, train_labels_original, target_number))
-        print("test set: new accuracy for number ", target_number, ": ",
-              new_accuracy(weight, bias, test_images, test_labels_original, target_number))
-        # print("accuracy for number ", target_number, ": ",
-        #       calculate_accuracy(weight, bias, train_images, train_labels_original, target_number))
+        print("accuracy for number ", target_number, ": ",
+              calculate_accuracy(weight, bias, train_images, train_labels_original, target_number))
 
-        # print("accuracy for number ", target_number, ": ",
-        #       calculate_accuracy(weight, bias, test_images, test_labels_original, target_number))
-        # print(train_images.shape)
-        # print(train_labels_original.shape)
+        print("accuracy for number ", target_number, ": ",
+              calculate_accuracy(weight, bias, test_images, test_labels_original, target_number))
 
-    # print("original label: ", test_labels_original[:5], ", classified as ",
-    #       ten_digits_classifier(weights, biases, test_images[:5, :]))
     print("accuracy: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
 
 
@@ -247,21 +305,13 @@ def problem_2(train_images, train_labels_original, test_images, test_labels_orig
         weights.append(weight)
         biases.append(bias)
 
-        # print("done classifier: ", i)
-        print("training set: new accuracy for number ", target_number, ": ",
-              new_accuracy(weight, bias, train_images, train_labels_original, target_number))
-        print("test set: new accuracy for number ", target_number, ": ",
-              new_accuracy(weight, bias, test_images, test_labels_original, target_number))
-        # print("accuracy for number ", target_number, ": ",
-        #       calculate_accuracy(weight, bias, train_images, train_labels_original, target_number))
+        print("accuracy for number ", target_number, ": ",
+              calculate_accuracy(weight, bias, train_images, train_labels_original, target_number))
 
-        # print("accuracy for number ", target_number, ": ",
-        #       calculate_accuracy(weight, bias, test_images, test_labels_original, target_number))
-        # print(train_images.shape)
-        # print(train_labels_original.shape)
+        print("accuracy for number ", target_number, ": ",
+              calculate_accuracy(weight, bias, test_images, test_labels_original, target_number))
+        print(train_images.shape)
 
-    # print("original label: ", test_labels_original[:5], ", classified as ",
-    #       ten_digits_classifier(weights, biases, test_images[:5, :]))
     print("accuracy: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
 
 
@@ -274,7 +324,24 @@ def problem_4():
 
 
 def problem_5(train_images, train_labels_original, test_images, test_labels_original):
-    print(number_of_regions(train_images[0]))
+    number_of_components_4_ways = np.zeros(5)
+    number_of_components_8_ways = np.zeros(5)
+    p = Pool(16)
+    number_of_components_4_ways = p.map(number_of_regions_4_ways, train_images[0:5])
+    print("done 4 way")
+    number_of_components_8_ways = p.map(number_of_regions_8_ways, train_images[0:5])
+    print("done 8 way")
+
+    number_of_components_4_ways = np.array(number_of_components_4_ways)
+    number_of_components_8_ways = np.array(number_of_components_8_ways)
+
+    number_of_components_4_ways = number_of_components_4_ways / np.max(number_of_components_4_ways)
+    number_of_components_8_ways = number_of_components_8_ways / np.max(number_of_components_8_ways)
+    test_case = train_images[0:5]
+    train_images = np.column_stack((test_case, number_of_components_4_ways))
+    train_images = np.column_stack((test_case, number_of_components_8_ways))
+
+
     return
 
 
@@ -285,12 +352,13 @@ def mnist_classifier():
     # normalizing the input
     train_images = train_images_original.reshape((60000, 28 * 28))
     train_images = train_images.astype('float32') / 255
-    # modified_train_labels = np.zeros(len(train_labels))
 
     test_images = test_images_original.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
 
     problem_5(train_images, train_labels_original, test_images, test_labels_original)
 
-    problem_1(train_images, train_labels_original, test_images, test_labels_original)
+    # problem_1(train_images, train_labels_original, test_images, test_labels_original)
+
+
 mnist_classifier()
