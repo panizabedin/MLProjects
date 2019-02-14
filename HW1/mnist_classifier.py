@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import time
 from multiprocessing import Pool
 
+from keras.utils import to_categorical
+from keras import models
+from keras import layers
+
 
 def show_image(image):
     plt.imshow(image.reshape(28, 28))
@@ -319,8 +323,28 @@ def problem_3():
     return
 
 
-def problem_4():
-    return
+def problem_4(train_images, train_labels_original, test_images, test_labels_original):
+    from keras.utils import to_categorical
+
+    train_labels = to_categorical(train_labels_original)
+    test_labels = to_categorical(test_labels_original)
+
+    network = models.Sequential()
+    network.add(layers.Dense(512, activation='relu', input_shape=(28 * 28,)))
+    network.add(layers.Dense(10, activation='softmax'))
+
+    network.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    epochs = 10
+    history = network.fit(train_images,
+                          train_labels,
+                          epochs=epochs,
+                          batch_size=128,
+                          validation_data=(test_images, test_labels))
+    return history
+
+
+
 
 
 def problem_5(train_images, train_labels_original, test_images, test_labels_original):
@@ -342,9 +366,6 @@ def problem_5(train_images, train_labels_original, test_images, test_labels_orig
     train_images = np.column_stack((test_case, number_of_components_8_ways))
 
 
-    return
-
-
 def mnist_classifier():
     # loading mnist data
     (train_images_original, train_labels_original), (test_images_original, test_labels_original) = mnist.load_data()
@@ -356,9 +377,11 @@ def mnist_classifier():
     test_images = test_images_original.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
 
-    problem_5(train_images, train_labels_original, test_images, test_labels_original)
+    # problem_5(train_images, train_labels_original, test_images, test_labels_original)
 
     # problem_1(train_images, train_labels_original, test_images, test_labels_original)
+
+    problem_4(train_images, train_labels_original, test_images, test_labels_original)
 
 
 mnist_classifier()
