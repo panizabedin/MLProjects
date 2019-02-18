@@ -8,6 +8,7 @@ from multiprocessing import Pool
 from keras.utils import to_categorical
 from keras import models
 from keras import layers
+from keras.utils import to_categorical
 
 
 def show_image(image):
@@ -191,6 +192,133 @@ def new_accuracy(weight, bias, test_images, test_labels, target_label):
     return test_accuracy
 
 
+def softmax_classify(weight, bias, input_image):
+    activation = softmax(np.dot(weight.T, input_image.T) + bias)
+    return activation
+
+
+def softmax_prediction(weight, bias, input_image):
+    predicted_labels = np.zeros((input_image.shape[0]))
+    predicted_labels = np.squeeze(np.argmax(softmax_classify(weight, bias, input_image), axis=0))
+    print(predicted_labels.shape)
+    return predicted_labels
+
+
+def softmax_accuracy(weight, bias, test_images, test_labels):
+    correct_count = 0
+
+    test_predictions = softmax_prediction(weight, bias, test_images)
+    for i in range(len(test_labels)):
+        if test_predictions[i] == test_labels[i]:
+            correct_count += 1
+    return correct_count / len(test_labels)
+
+
+def softmax(z):
+    z = z - np.max(z, axis=0)
+    s = np.exp(z) / np.sum(np.exp(z), axis=0)
+    return s
+
+
+def softmax_mini_batch_sgd(train_images, train_labels, epochs, lr, batch_size):
+    number_of_examples = train_images.shape[0]
+    # n is the number of features
+    n = train_images.shape[1]
+    # m = 10
+    m = 10
+    weight = np.zeros((n, m))
+    bias = np.zeros((m, 1))
+    z = np.zeros(m)
+    activations = np.zeros(m)
+    for epoch in range(epochs):
+        shuffled_indices = np.random.permutation(number_of_examples)
+        train_images_shuffled = train_images[shuffled_indices]
+        train_labels_shuffled = train_labels[shuffled_indices]
+        # for i in range(0, m, batch_size):
+        for i in range(0, number_of_examples, batch_size):
+            xi = train_images_shuffled[i:i + batch_size]
+            yi = train_labels_shuffled[i:i + batch_size]
+
+            z = np.dot(weight.T, xi.T) + bias
+            activations = softmax(z)
+
+            activations = np.repeat(activations[np.newaxis], m, axis=0) - np.repeat(np.identity(m)[:, :, np.newaxis],
+                                                                                    batch_size, axis=2)
+            b = yi.T[:, np.newaxis]
+            dl_dz = np.repeat(b, m, axis=1) * activations
+            dl_dz = np.sum(dl_dz, axis=0)
+            gradient_w = 1.0 / batch_size * np.dot(xi.T, dl_dz.T)
+            gradient_b = 1.0 / batch_size * np.sum(dl_dz, axis=1, keepdims=True)
+
+            weight = weight - lr * gradient_w
+            bias = bias - lr * gradient_b
+    return weight, bias
+
+def softmax_classify(weight, bias, input_image):
+    activation = softmax(np.dot(weight.T, input_image.T) + bias)
+    return activation
+
+
+def softmax_prediction(weight, bias, input_image):
+    predicted_labels = np.zeros((input_image.shape[0]))
+    predicted_labels = np.squeeze(np.argmax(softmax_classify(weight, bias, input_image), axis=0))
+    print(predicted_labels.shape)
+    return predicted_labels
+
+
+def softmax_accuracy(weight, bias, test_images, test_labels):
+    correct_count = 0
+
+    test_predictions = softmax_prediction(weight, bias, test_images)
+    for i in range(len(test_labels)):
+        if test_predictions[i] == test_labels[i]:
+            correct_count += 1
+    return correct_count / len(test_labels)
+
+
+def softmax(z):
+    z = z - np.max(z, axis=0)
+    s = np.exp(z) / np.sum(np.exp(z), axis=0)
+    return s
+
+
+def softmax_mini_batch_sgd(train_images, train_labels, epochs, lr, batch_size):
+    number_of_examples = train_images.shape[0]
+    # n is the number of features
+    n = train_images.shape[1]
+    # m = 10
+    m = 10
+    weight = np.zeros((n, m))
+    bias = np.zeros((m, 1))
+    z = np.zeros(m)
+    activations = np.zeros(m)
+    for epoch in range(epochs):
+        shuffled_indices = np.random.permutation(number_of_examples)
+        train_images_shuffled = train_images[shuffled_indices]
+        train_labels_shuffled = train_labels[shuffled_indices]
+        # for i in range(0, m, batch_size):
+        for i in range(0, number_of_examples, batch_size):
+            xi = train_images_shuffled[i:i + batch_size]
+            yi = train_labels_shuffled[i:i + batch_size]
+
+            z = np.dot(weight.T, xi.T) + bias
+            activations = softmax(z)
+
+            activations = np.repeat(activations[np.newaxis], m, axis=0) - np.repeat(np.identity(m)[:, :, np.newaxis],
+                                                                                    batch_size, axis=2)
+            b = yi.T[:, np.newaxis]
+            dl_dz = np.repeat(b, m, axis=1) * activations
+            dl_dz = np.sum(dl_dz, axis=0)
+            gradient_w = 1.0 / batch_size * np.dot(xi.T, dl_dz.T)
+            gradient_b = 1.0 / batch_size * np.sum(dl_dz, axis=1, keepdims=True)
+
+            weight = weight - lr * gradient_w
+            bias = bias - lr * gradient_b
+    return weight, bias
+
+
+
+
 def mapping_grey_scale_to_01(input_images):
     return np.ceil(input_images)
 
@@ -319,9 +447,20 @@ def problem_2(train_images, train_labels_original, test_images, test_labels_orig
     print("accuracy: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
 
 
-def problem_3():
-    return
 
+
+def problem_3(train_images, train_labels_original, test_images, test_labels_original):
+    train_labels = (np.arange(np.max(train_labels_original) + 1) == train_labels_original[:, None]).astype(float)
+    test_labels = (np.arange(np.max(test_labels_original) + 1) == test_labels_original[:, None]).astype(float)
+    weights, bias = softmax_mini_batch_sgd(train_images, train_labels, 10, .1, 500)
+
+    print(softmax_prediction(weights, bias, train_images))
+
+    print("training set accuracy : ",
+          softmax_accuracy(weights, bias, train_images, train_labels_original))
+
+    print("test set accuracy  : ",
+          softmax_accuracy(weights, bias, test_images, test_labels_original))
 
 def problem_4(train_images, train_labels_original, test_images, test_labels_original):
     from keras.utils import to_categorical
@@ -342,9 +481,6 @@ def problem_4(train_images, train_labels_original, test_images, test_labels_orig
                           batch_size=128,
                           validation_data=(test_images, test_labels))
     return history
-
-
-
 
 
 def problem_5(train_images, train_labels_original, test_images, test_labels_original):
@@ -376,12 +512,12 @@ def mnist_classifier():
 
     test_images = test_images_original.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
-
+    # softmax_mini_batch_sgd(train_images, train_labels_original, 10, 1, 1)
     # problem_5(train_images, train_labels_original, test_images, test_labels_original)
-
+    problem_3(train_images, train_labels_original, test_images, test_labels_original)
     # problem_1(train_images, train_labels_original, test_images, test_labels_original)
 
-    problem_4(train_images, train_labels_original, test_images, test_labels_original)
+    # problem_4(train_images, train_labels_original, test_images, test_labels_original)
 
 
 mnist_classifier()
