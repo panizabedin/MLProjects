@@ -469,7 +469,7 @@ def problem_4(train_images, train_labels_original, test_images, test_labels_orig
     test_labels = to_categorical(test_labels_original)
 
     network = models.Sequential()
-    network.add(layers.Dense(512, activation='relu', input_shape=(28 * 28,)))
+    #network.add(layers.Dense(512, activation='relu', input_shape=(28 * 28,)))
     network.add(layers.Dense(10, activation='softmax'))
 
     network.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
