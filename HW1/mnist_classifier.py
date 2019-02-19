@@ -1,32 +1,21 @@
 from keras.datasets import mnist
 import numpy as np
-from pythonds.basic.stack import Stack
-import matplotlib.pyplot as plt
-import time
 from multiprocessing import Pool
-
-from keras.utils import to_categorical
 from keras import models
 from keras import layers
-from keras.utils import to_categorical
 
 
-def show_image(image):
-    plt.imshow(image.reshape(28, 28))
-    plt.grid(None)
-    plt.show()
-
-
+#activation function for problem 1 and problem 2
 def sigmoid(z):
     s = 1.0 / (1.0 + np.exp(-z))
     return s
 
-
+#computes activation given weight and bias
 def classify(weight, bias, input_image):
     activation = sigmoid(np.dot(weight.T, input_image.T) + bias)
     return activation
 
-
+#classify labels to 0 and 1
 def binary_classify(weight, bias, input_image):
     predicts = classify(weight, bias, input_image)
     print(predicts.shape)
@@ -37,7 +26,7 @@ def binary_classify(weight, bias, input_image):
             predicts.T[i] = 0
     return predicts
 
-
+#using argmax to output the classifier with the most probability
 def ten_digits_classifier(weights, biases, input_image):
     if input_image.ndim < 2:
         number_of_inputs = 1
@@ -57,63 +46,7 @@ def ten_digits_classifier(weights, biases, input_image):
     return predictions
 
 
-def logistic_regression_batch(train_images, train_labels, epochs, lr, target_label):
-    for i in range(len(train_images)):
-        if train_labels[i] == target_label:
-            train_labels[i] = 1
-        else:
-            train_labels[i] = 0
-
-    # m is the number of examples
-    m = train_images.shape[0]
-    # n is the number of features
-    n = train_images.shape[1]
-    np.random.seed(42)
-    weight = np.random.randn(n, 1)
-    bias = np.random.randn(1, 1)
-
-    for epoch in range(epochs):
-        z = np.dot(weight.T, train_images.T) + bias
-        activation = sigmoid(z)
-        gradient_w = 1.0 / m * np.dot(train_images.T, (activation - train_labels).T)
-        gradient_b = 1.0 / m * np.sum(activation - train_labels)
-        weight = weight - lr * gradient_w
-        bias = bias - lr * gradient_b
-
-    return weight, bias
-
-
-def logistic_regression_mini_batch_sgd_loss_ce(train_images, train_labels, epochs, lr, target_label, batch_size):
-    modified_train_labels = np.zeros(len(train_labels))
-    for i in range(len(train_images)):
-        if train_labels[i] == target_label:
-            modified_train_labels[i] = 1
-
-    # m is the number of examples
-    m = train_images.shape[0]
-    # n is the number of features
-    n = train_images.shape[1]
-    # np.random.seed(42)
-    weight = np.zeros((n, 1))
-    bias = 0
-
-    for epoch in range(epochs):
-        shuffled_indices = np.random.permutation(m)
-        train_images_shuffled = train_images[shuffled_indices]
-        train_labels_shuffled = modified_train_labels[shuffled_indices]
-        for i in range(0, m, batch_size):
-            xi = train_images_shuffled[i:i + batch_size]
-            yi = train_labels_shuffled[i:i + batch_size]
-            z = np.dot(weight.T, xi.T) + bias
-            activation = sigmoid(z)
-            gradient_w = 1.0 / batch_size * np.dot(xi.T, (activation - yi).T)
-            gradient_b = 1.0 / batch_size * np.sum(activation - yi)
-            weight = weight - lr * gradient_w
-            bias = bias - lr * gradient_b
-
-    return weight, bias
-
-
+#training the data using squared error and mini batch sgd
 def logistic_regression_mini_batch_sgd_loss_se(train_images, train_labels, epochs, lr, target_label, batch_size):
     modified_train_labels = np.zeros(len(train_labels))
     for i in range(len(train_images)):
@@ -146,7 +79,40 @@ def logistic_regression_mini_batch_sgd_loss_se(train_images, train_labels, epoch
 
     return weight, bias
 
+#training the data using binary cross entropy and mini batch sgd
+def logistic_regression_mini_batch_sgd_loss_ce(train_images, train_labels, epochs, lr, target_label, batch_size):
+    modified_train_labels = np.zeros(len(train_labels))
+    for i in range(len(train_images)):
+        if train_labels[i] == target_label:
+            modified_train_labels[i] = 1
 
+    # m is the number of examples
+    m = train_images.shape[0]
+    # n is the number of features
+    n = train_images.shape[1]
+    # np.random.seed(42)
+    weight = np.zeros((n, 1))
+    bias = 0
+
+    for epoch in range(epochs):
+        shuffled_indices = np.random.permutation(m)
+        train_images_shuffled = train_images[shuffled_indices]
+        train_labels_shuffled = modified_train_labels[shuffled_indices]
+        for i in range(0, m, batch_size):
+            xi = train_images_shuffled[i:i + batch_size]
+            yi = train_labels_shuffled[i:i + batch_size]
+            z = np.dot(weight.T, xi.T) + bias
+            activation = sigmoid(z)
+            gradient_w = 1.0 / batch_size * np.dot(xi.T, (activation - yi).T)
+            gradient_b = 1.0 / batch_size * np.sum(activation - yi)
+            weight = weight - lr * gradient_w
+            bias = bias - lr * gradient_b
+
+    return weight, bias
+
+
+
+#computes the accuracy for each classifier given a specific label
 def calculate_accuracy(weight, bias, test_images, test_labels, target_label):
     false_positive_count = 0
     false_negative_count = 0
@@ -172,7 +138,7 @@ def calculate_accuracy(weight, bias, test_images, test_labels, target_label):
                 correct_count += 1
     return correct_count / len(test_labels)
 
-
+#compute the accuracy of using argmax to output the classifier with the most probability
 def ten_digits_accuracy(weights, biases, test_images, test_labels):
     test_predictions = ten_digits_classifier(weights, biases, test_images)
 
@@ -180,30 +146,18 @@ def ten_digits_accuracy(weights, biases, test_images, test_labels):
 
     return 1.0 - incorrect_count / len(test_labels)
 
-
-def new_accuracy(weight, bias, test_images, test_labels, target_label):
-    modified_test_labels = np.zeros(len(test_labels))
-    for j in range(len(test_labels)):
-        if test_labels[j] == target_label:
-            modified_test_labels[j] = 1
-
-    test_predictions = binary_classify(weight, bias, test_images)
-    test_accuracy = 100 - np.mean(np.abs(test_predictions - modified_test_labels) * 100)
-    return test_accuracy
-
-
+#activation of the weighted input using softmax
 def softmax_classify(weight, bias, input_image):
     activation = softmax(np.dot(weight.T, input_image.T) + bias)
     return activation
 
-
+#predicts the label of test images after training the training data
 def softmax_prediction(weight, bias, input_image):
     predicted_labels = np.zeros((input_image.shape[0]))
     predicted_labels = np.squeeze(np.argmax(softmax_classify(weight, bias, input_image), axis=0))
-    print(predicted_labels.shape)
     return predicted_labels
 
-
+#calculates the accuracy of predicted labels using softmax
 def softmax_accuracy(weight, bias, test_images, test_labels):
     correct_count = 0
 
@@ -213,18 +167,18 @@ def softmax_accuracy(weight, bias, test_images, test_labels):
             correct_count += 1
     return correct_count / len(test_labels)
 
-
+#softmax activation function
 def softmax(z):
     z = z - np.max(z, axis=0)
     s = np.exp(z) / np.sum(np.exp(z), axis=0)
     return s
 
-
+#training the input data using softmax and mini batch sgd
 def softmax_mini_batch_sgd(train_images, train_labels, epochs, lr, batch_size):
     number_of_examples = train_images.shape[0]
     # n is the number of features
     n = train_images.shape[1]
-    # m = 10
+    # m = 10 is the number of output neurons
     m = 10
     weight = np.zeros((n, m))
     bias = np.zeros((m, 1))
@@ -234,95 +188,33 @@ def softmax_mini_batch_sgd(train_images, train_labels, epochs, lr, batch_size):
         shuffled_indices = np.random.permutation(number_of_examples)
         train_images_shuffled = train_images[shuffled_indices]
         train_labels_shuffled = train_labels[shuffled_indices]
-        # for i in range(0, m, batch_size):
         for i in range(0, number_of_examples, batch_size):
             xi = train_images_shuffled[i:i + batch_size]
             yi = train_labels_shuffled[i:i + batch_size]
 
+            #computes weighted input and activation of the weighted input
             z = np.dot(weight.T, xi.T) + bias
             activations = softmax(z)
-
             activations = np.repeat(activations[np.newaxis], m, axis=0) - np.repeat(np.identity(m)[:, :, np.newaxis],
                                                                                     batch_size, axis=2)
-            b = yi.T[:, np.newaxis]
-            dl_dz = np.repeat(b, m, axis=1) * activations
+            #derivative of loss function with respect to the weighted input
+            dl_dz = np.repeat(yi.T[:, np.newaxis], m, axis=1) * activations
             dl_dz = np.sum(dl_dz, axis=0)
+
+            #computes the gradient w.r.t the weights and biases
             gradient_w = 1.0 / batch_size * np.dot(xi.T, dl_dz.T)
             gradient_b = 1.0 / batch_size * np.sum(dl_dz, axis=1, keepdims=True)
 
+            #updating the weights and biases using gradient
             weight = weight - lr * gradient_w
             bias = bias - lr * gradient_b
     return weight, bias
 
-def softmax_classify(weight, bias, input_image):
-    activation = softmax(np.dot(weight.T, input_image.T) + bias)
-    return activation
-
-
-def softmax_prediction(weight, bias, input_image):
-    predicted_labels = np.zeros((input_image.shape[0]))
-    predicted_labels = np.squeeze(np.argmax(softmax_classify(weight, bias, input_image), axis=0))
-    print(predicted_labels.shape)
-    return predicted_labels
-
-
-def softmax_accuracy(weight, bias, test_images, test_labels):
-    correct_count = 0
-
-    test_predictions = softmax_prediction(weight, bias, test_images)
-    for i in range(len(test_labels)):
-        if test_predictions[i] == test_labels[i]:
-            correct_count += 1
-    return correct_count / len(test_labels)
-
-
-def softmax(z):
-    z = z - np.max(z, axis=0)
-    s = np.exp(z) / np.sum(np.exp(z), axis=0)
-    return s
-
-
-def softmax_mini_batch_sgd(train_images, train_labels, epochs, lr, batch_size):
-    number_of_examples = train_images.shape[0]
-    # n is the number of features
-    n = train_images.shape[1]
-    # m = 10
-    m = 10
-    weight = np.zeros((n, m))
-    bias = np.zeros((m, 1))
-    z = np.zeros(m)
-    activations = np.zeros(m)
-    for epoch in range(epochs):
-        shuffled_indices = np.random.permutation(number_of_examples)
-        train_images_shuffled = train_images[shuffled_indices]
-        train_labels_shuffled = train_labels[shuffled_indices]
-        # for i in range(0, m, batch_size):
-        for i in range(0, number_of_examples, batch_size):
-            xi = train_images_shuffled[i:i + batch_size]
-            yi = train_labels_shuffled[i:i + batch_size]
-
-            z = np.dot(weight.T, xi.T) + bias
-            activations = softmax(z)
-
-            activations = np.repeat(activations[np.newaxis], m, axis=0) - np.repeat(np.identity(m)[:, :, np.newaxis],
-                                                                                    batch_size, axis=2)
-            b = yi.T[:, np.newaxis]
-            dl_dz = np.repeat(b, m, axis=1) * activations
-            dl_dz = np.sum(dl_dz, axis=0)
-            gradient_w = 1.0 / batch_size * np.dot(xi.T, dl_dz.T)
-            gradient_b = 1.0 / batch_size * np.sum(dl_dz, axis=1, keepdims=True)
-
-            weight = weight - lr * gradient_w
-            bias = bias - lr * gradient_b
-    return weight, bias
-
-
-
-
+#Round the grey values of the images to 1 and 0
 def mapping_grey_scale_to_01(input_images):
     return np.ceil(input_images)
 
-
+#compute the number of white regions using the number of connected components(4 neighbors)
 def number_of_regions_4_ways(input_image):
     rounded_input_images = mapping_grey_scale_to_01(input_image)
 
@@ -338,7 +230,7 @@ def number_of_regions_4_ways(input_image):
 
     return component_count
 
-
+#compute the number of white regions using the number of connected components(8 neighbors)
 def number_of_regions_8_ways(input_image):
     rounded_input_images = mapping_grey_scale_to_01(input_image)
 
@@ -354,7 +246,7 @@ def number_of_regions_8_ways(input_image):
 
     return component_count
 
-
+#dfs on input images(checking 4 neighbors)
 def dfs_4_ways(input_image, start, visited=None):
     if visited is None:
         visited = set()
@@ -375,7 +267,7 @@ def dfs_4_ways(input_image, start, visited=None):
 
     return visited
 
-
+#dfs on input images(checking 8 neighbors)
 def dfs_8_ways(input_image, start, visited=None):
     if visited is None:
         visited = set()
@@ -403,7 +295,7 @@ def dfs_8_ways(input_image, start, visited=None):
 
     return visited
 
-
+#executes problem 1. I chose epochs = 100, learning rate =1 and batch_size = 512
 def problem_1(train_images, train_labels_original, test_images, test_labels_original):
     # store weights and biases for each classifier
     weights = []
@@ -411,7 +303,7 @@ def problem_1(train_images, train_labels_original, test_images, test_labels_orig
     for i in range(10):
         target_number = i
 
-        weight, bias = logistic_regression_mini_batch_sgd_loss_ce(train_images, train_labels_original, 100, 1,
+        weight, bias = logistic_regression_mini_batch_sgd_loss_se(train_images, train_labels_original, 100, 1,
                                                                   target_number, 512)
         weights.append(weight)
         biases.append(bias)
@@ -424,7 +316,7 @@ def problem_1(train_images, train_labels_original, test_images, test_labels_orig
 
     print("accuracy: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
 
-
+#executes problem 2. I chose epochs = 100, learning rate =1 and batch_size = 512
 def problem_2(train_images, train_labels_original, test_images, test_labels_original):
     # store weights and biases for each classifier
     weights = []
@@ -448,11 +340,11 @@ def problem_2(train_images, train_labels_original, test_images, test_labels_orig
 
 
 
-
+#executes problem 3. I chose epochs = 10, learning rate =0.1 and batch_size = 512
 def problem_3(train_images, train_labels_original, test_images, test_labels_original):
     train_labels = (np.arange(np.max(train_labels_original) + 1) == train_labels_original[:, None]).astype(float)
     test_labels = (np.arange(np.max(test_labels_original) + 1) == test_labels_original[:, None]).astype(float)
-    weights, bias = softmax_mini_batch_sgd(train_images, train_labels, 10, .1, 500)
+    weights, bias = softmax_mini_batch_sgd(train_images, train_labels, 10, .1, 512)
 
     print(softmax_prediction(weights, bias, train_images))
 
@@ -462,6 +354,7 @@ def problem_3(train_images, train_labels_original, test_images, test_labels_orig
     print("test set accuracy  : ",
           softmax_accuracy(weights, bias, test_images, test_labels_original))
 
+#executes problem 4. I chose epochs = 10, and batch_size = 128 using keras
 def problem_4(train_images, train_labels_original, test_images, test_labels_original):
     from keras.utils import to_categorical
 
@@ -482,26 +375,51 @@ def problem_4(train_images, train_labels_original, test_images, test_labels_orig
                           validation_data=(test_images, test_labels))
     return history
 
-
+#adding new features to problem 4
 def problem_5(train_images, train_labels_original, test_images, test_labels_original):
-    number_of_components_4_ways = np.zeros(5)
-    number_of_components_8_ways = np.zeros(5)
+    number_of_components_4_ways_train = np.zeros(len(train_images))
+    number_of_components_8_ways_train = np.zeros(len(train_images))
+    number_of_components_4_ways_test = np.zeros(len(test_images))
+    number_of_components_8_ways_test = np.zeros(len(test_images))
     p = Pool(16)
-    number_of_components_4_ways = p.map(number_of_regions_4_ways, train_images[0:5])
-    print("done 4 way")
-    number_of_components_8_ways = p.map(number_of_regions_8_ways, train_images[0:5])
-    print("done 8 way")
+    number_of_components_4_ways_train = p.map(number_of_regions_4_ways, train_images)
+    number_of_components_4_ways_test = p.map(number_of_regions_4_ways,test_images)
+    print("number of components computed (4 neighbors)")
+    number_of_components_8_ways_train= p.map(number_of_regions_8_ways, train_images)
+    number_of_components_8_ways_test = p.map(number_of_regions_8_ways, test_images)
 
-    number_of_components_4_ways = np.array(number_of_components_4_ways)
-    number_of_components_8_ways = np.array(number_of_components_8_ways)
+    print("number of components computed (8 neighbors)")
 
-    number_of_components_4_ways = number_of_components_4_ways / np.max(number_of_components_4_ways)
-    number_of_components_8_ways = number_of_components_8_ways / np.max(number_of_components_8_ways)
-    test_case = train_images[0:5]
-    train_images = np.column_stack((test_case, number_of_components_4_ways))
-    train_images = np.column_stack((test_case, number_of_components_8_ways))
+    number_of_components_4_ways_train = np.array(number_of_components_4_ways_train)
+    number_of_components_4_ways_test = np.array(number_of_components_4_ways_test)
+
+    number_of_components_8_ways_train = np.array(number_of_components_8_ways_train)
+    number_of_components_8_ways_test = np.array(number_of_components_8_ways_test)
+
+    number_of_components_4_ways_test = number_of_components_4_ways_test / np.max(number_of_components_4_ways_test)
+    number_of_components_4_ways_train = number_of_components_4_ways_train / np.max(number_of_components_4_ways_train)
+
+    number_of_components_8_ways_train = number_of_components_8_ways_train / np.max(number_of_components_8_ways_train)
+    number_of_components_8_ways_test = number_of_components_8_ways_test / np.max(number_of_components_8_ways_test)
+    number_of_components_4_ways_train = number_of_components_4_ways_train / np.max(number_of_components_4_ways_train)
+    number_of_components_4_ways_test = number_of_components_4_ways_test / np.max(number_of_components_4_ways_test)
+
+    number_of_components_4_ways_train = np.reshape(number_of_components_4_ways_train, (len(train_images), 1))
+    number_of_components_8_ways_train = np.reshape(number_of_components_8_ways_train, (len(train_images), 1))
+
+    number_of_components_4_ways_test = np.reshape(number_of_components_4_ways_test, (len(test_images), 1))
+    number_of_components_8_ways_test = np.reshape(number_of_components_8_ways_test, (len(test_images), 1))
+
+    new_train_images = np.append(train_images, number_of_components_8_ways_train, axis=1)
+    new_train_images = np.append(new_train_images, number_of_components_4_ways_train, axis=1)
+
+    new_test_images = np.append(test_images, number_of_components_8_ways_test, axis=1)
+    new_test_images = np.append(new_test_images, number_of_components_4_ways_test, axis=1)
+
+    problem_4(new_train_images, train_labels_original, new_test_images, test_labels_original)
 
 
+#preparing the input and executes all problems
 def mnist_classifier():
     # loading mnist data
     (train_images_original, train_labels_original), (test_images_original, test_labels_original) = mnist.load_data()
@@ -512,12 +430,16 @@ def mnist_classifier():
 
     test_images = test_images_original.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
-    # softmax_mini_batch_sgd(train_images, train_labels_original, 10, 1, 1)
-    # problem_5(train_images, train_labels_original, test_images, test_labels_original)
+    print("Problem 1's output:")
+    problem_1(train_images, train_labels_original, test_images, test_labels_original)
+    print("Problem 2's output:")
+    problem_2(train_images, train_labels_original, test_images, test_labels_original)
+    print("Problem 3's output:")
     problem_3(train_images, train_labels_original, test_images, test_labels_original)
-    # problem_1(train_images, train_labels_original, test_images, test_labels_original)
-
-    # problem_4(train_images, train_labels_original, test_images, test_labels_original)
+    print("Problem 4's output:")
+    problem_4(train_images, train_labels_original, test_images, test_labels_original)
+    print("Problem 5's output:")
+    problem_5(train_images, train_labels_original, test_images, test_labels_original)
 
 
 mnist_classifier()
