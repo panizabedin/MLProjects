@@ -5,17 +5,19 @@ from keras import models
 from keras import layers
 
 
-#activation function for problem 1 and problem 2
+# activation function for problem 1 and problem 2
 def sigmoid(z):
     s = 1.0 / (1.0 + np.exp(-z))
     return s
 
-#computes activation given weight and bias
+
+# computes activation given weight and bias
 def classify(weight, bias, input_image):
     activation = sigmoid(np.dot(weight.T, input_image.T) + bias)
     return activation
 
-#classify labels to 0 and 1
+
+# classify labels to 0 and 1
 def binary_classify(weight, bias, input_image):
     predicts = classify(weight, bias, input_image)
     print(predicts.shape)
@@ -26,7 +28,8 @@ def binary_classify(weight, bias, input_image):
             predicts.T[i] = 0
     return predicts
 
-#using argmax to output the classifier with the most probability
+
+# using argmax to output the classifier with the most probability
 def ten_digits_classifier(weights, biases, input_image):
     if input_image.ndim < 2:
         number_of_inputs = 1
@@ -46,7 +49,7 @@ def ten_digits_classifier(weights, biases, input_image):
     return predictions
 
 
-#training the data using squared error and mini batch sgd
+# training the data using squared error and mini batch sgd
 def logistic_regression_mini_batch_sgd_loss_se(train_images, train_labels, epochs, lr, target_label, batch_size):
     modified_train_labels = np.zeros(len(train_labels))
     for i in range(len(train_images)):
@@ -57,7 +60,7 @@ def logistic_regression_mini_batch_sgd_loss_se(train_images, train_labels, epoch
     m = train_images.shape[0]
     # n is the number of features
     n = train_images.shape[1]
-    # np.random.seed(42)
+    #initializing weight and bias
     weight = np.zeros((n, 1))
     bias = 0
 
@@ -79,7 +82,8 @@ def logistic_regression_mini_batch_sgd_loss_se(train_images, train_labels, epoch
 
     return weight, bias
 
-#training the data using binary cross entropy and mini batch sgd
+
+# training the data using binary cross entropy and mini batch sgd
 def logistic_regression_mini_batch_sgd_loss_ce(train_images, train_labels, epochs, lr, target_label, batch_size):
     modified_train_labels = np.zeros(len(train_labels))
     for i in range(len(train_images)):
@@ -111,8 +115,7 @@ def logistic_regression_mini_batch_sgd_loss_ce(train_images, train_labels, epoch
     return weight, bias
 
 
-
-#computes the accuracy for each classifier given a specific label
+# computes the accuracy for each classifier given a specific label
 def calculate_accuracy(weight, bias, test_images, test_labels, target_label):
     false_positive_count = 0
     false_negative_count = 0
@@ -138,7 +141,8 @@ def calculate_accuracy(weight, bias, test_images, test_labels, target_label):
                 correct_count += 1
     return correct_count / len(test_labels)
 
-#compute the accuracy of using argmax to output the classifier with the most probability
+
+# compute the accuracy of using argmax to output the classifier with the most probability
 def ten_digits_accuracy(weights, biases, test_images, test_labels):
     test_predictions = ten_digits_classifier(weights, biases, test_images)
 
@@ -146,18 +150,21 @@ def ten_digits_accuracy(weights, biases, test_images, test_labels):
 
     return 1.0 - incorrect_count / len(test_labels)
 
-#activation of the weighted input using softmax
+
+# activation of the weighted input using softmax
 def softmax_classify(weight, bias, input_image):
     activation = softmax(np.dot(weight.T, input_image.T) + bias)
     return activation
 
-#predicts the label of test images after training the training data
+
+# predicts the label of test images after training the training data
 def softmax_prediction(weight, bias, input_image):
     predicted_labels = np.zeros((input_image.shape[0]))
     predicted_labels = np.squeeze(np.argmax(softmax_classify(weight, bias, input_image), axis=0))
     return predicted_labels
 
-#calculates the accuracy of predicted labels using softmax
+
+# calculates the accuracy of predicted labels using softmax
 def softmax_accuracy(weight, bias, test_images, test_labels):
     correct_count = 0
 
@@ -167,13 +174,15 @@ def softmax_accuracy(weight, bias, test_images, test_labels):
             correct_count += 1
     return correct_count / len(test_labels)
 
-#softmax activation function
+
+# softmax activation function
 def softmax(z):
     z = z - np.max(z, axis=0)
     s = np.exp(z) / np.sum(np.exp(z), axis=0)
     return s
 
-#training the input data using softmax and mini batch sgd
+
+# training the input data using softmax and mini batch sgd
 def softmax_mini_batch_sgd(train_images, train_labels, epochs, lr, batch_size):
     number_of_examples = train_images.shape[0]
     # n is the number of features
@@ -192,29 +201,32 @@ def softmax_mini_batch_sgd(train_images, train_labels, epochs, lr, batch_size):
             xi = train_images_shuffled[i:i + batch_size]
             yi = train_labels_shuffled[i:i + batch_size]
 
-            #computes weighted input and activation of the weighted input
+            # computes weighted input and activation of the weighted input
             z = np.dot(weight.T, xi.T) + bias
             activations = softmax(z)
             activations = np.repeat(activations[np.newaxis], m, axis=0) - np.repeat(np.identity(m)[:, :, np.newaxis],
-                                                                                    batch_size, axis=2)
-            #derivative of loss function with respect to the weighted input
-            dl_dz = np.repeat(yi.T[:, np.newaxis], m, axis=1) * activations
+                                                                                          batch_size, axis=2)
+            # derivative of loss function with respect to the weighted input
+            modified_dim = yi.T[:, np.newaxis]
+            dl_dz = np.repeat(modified_dim, m, axis=1) * activations
             dl_dz = np.sum(dl_dz, axis=0)
 
-            #computes the gradient w.r.t the weights and biases
+            # computes the gradient w.r.t the weights and biases
             gradient_w = 1.0 / batch_size * np.dot(xi.T, dl_dz.T)
             gradient_b = 1.0 / batch_size * np.sum(dl_dz, axis=1, keepdims=True)
 
-            #updating the weights and biases using gradient
+            # updating the weights and biases using gradient
             weight = weight - lr * gradient_w
             bias = bias - lr * gradient_b
     return weight, bias
 
-#Round the grey values of the images to 1 and 0
+
+# Round the grey values of the images to 1 and 0
 def mapping_grey_scale_to_01(input_images):
     return np.ceil(input_images)
 
-#compute the number of white regions using the number of connected components(4 neighbors)
+
+# compute the number of white regions using the number of connected components(4 neighbors)
 def number_of_regions_4_ways(input_image):
     rounded_input_images = mapping_grey_scale_to_01(input_image)
 
@@ -230,7 +242,8 @@ def number_of_regions_4_ways(input_image):
 
     return component_count
 
-#compute the number of white regions using the number of connected components(8 neighbors)
+
+# compute the number of white regions using the number of connected components(8 neighbors)
 def number_of_regions_8_ways(input_image):
     rounded_input_images = mapping_grey_scale_to_01(input_image)
 
@@ -246,7 +259,8 @@ def number_of_regions_8_ways(input_image):
 
     return component_count
 
-#dfs on input images(checking 4 neighbors)
+
+# dfs on input images(checking 4 neighbors)
 def dfs_4_ways(input_image, start, visited=None):
     if visited is None:
         visited = set()
@@ -267,7 +281,8 @@ def dfs_4_ways(input_image, start, visited=None):
 
     return visited
 
-#dfs on input images(checking 8 neighbors)
+
+# dfs on input images(checking 8 neighbors)
 def dfs_8_ways(input_image, start, visited=None):
     if visited is None:
         visited = set()
@@ -295,7 +310,8 @@ def dfs_8_ways(input_image, start, visited=None):
 
     return visited
 
-#executes problem 1. I chose epochs = 100, learning rate =1 and batch_size = 512
+
+# executes problem 1. I chose epochs = 100, learning rate =1 and batch_size = 512
 def problem_1(train_images, train_labels_original, test_images, test_labels_original):
     # store weights and biases for each classifier
     weights = []
@@ -308,15 +324,16 @@ def problem_1(train_images, train_labels_original, test_images, test_labels_orig
         weights.append(weight)
         biases.append(bias)
 
-        print("accuracy for number ", target_number, ": ",
+        print("training set: accuracy for digit ", target_number, ": ",
               calculate_accuracy(weight, bias, train_images, train_labels_original, target_number))
 
-        print("accuracy for number ", target_number, ": ",
+        print("test set: accuracy for digit ", target_number, ": ",
               calculate_accuracy(weight, bias, test_images, test_labels_original, target_number))
 
-    print("accuracy: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
+    print("accuracy using argmax: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
 
-#executes problem 2. I chose epochs = 100, learning rate =1 and batch_size = 512
+
+# executes problem 2. I chose epochs = 100, learning rate =1 and batch_size = 512
 def problem_2(train_images, train_labels_original, test_images, test_labels_original):
     # store weights and biases for each classifier
     weights = []
@@ -329,22 +346,20 @@ def problem_2(train_images, train_labels_original, test_images, test_labels_orig
         weights.append(weight)
         biases.append(bias)
 
-        print("accuracy for number ", target_number, ": ",
+        print("training set: accuracy for digit", target_number, ": ",
               calculate_accuracy(weight, bias, train_images, train_labels_original, target_number))
 
-        print("accuracy for number ", target_number, ": ",
+        print("test set: accuracy for digit ", target_number, ": ",
               calculate_accuracy(weight, bias, test_images, test_labels_original, target_number))
-        print(train_images.shape)
 
-    print("accuracy: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
-
+    print("accuracy using argmax: ", ten_digits_accuracy(weights, biases, test_images, test_labels_original) * 100, "%")
 
 
-#executes problem 3. I chose epochs = 10, learning rate =0.1 and batch_size = 512
+# executes problem 3. I chose epochs = 10, learning rate =0.1 and batch_size = 100
 def problem_3(train_images, train_labels_original, test_images, test_labels_original):
     train_labels = (np.arange(np.max(train_labels_original) + 1) == train_labels_original[:, None]).astype(float)
     test_labels = (np.arange(np.max(test_labels_original) + 1) == test_labels_original[:, None]).astype(float)
-    weights, bias = softmax_mini_batch_sgd(train_images, train_labels, 10, .1, 512)
+    weights, bias = softmax_mini_batch_sgd(train_images, train_labels, 10, .1, 100)
 
     print(softmax_prediction(weights, bias, train_images))
 
@@ -354,15 +369,17 @@ def problem_3(train_images, train_labels_original, test_images, test_labels_orig
     print("test set accuracy  : ",
           softmax_accuracy(weights, bias, test_images, test_labels_original))
 
-#executes problem 4. I chose epochs = 10, and batch_size = 128 using keras
+
+# executes problem 4. I chose epochs = 10, and batch_size = 128 using keras
 def problem_4(train_images, train_labels_original, test_images, test_labels_original):
+    print("softmax using keras:")
     from keras.utils import to_categorical
 
     train_labels = to_categorical(train_labels_original)
     test_labels = to_categorical(test_labels_original)
 
     network = models.Sequential()
-    #network.add(layers.Dense(512, activation='relu', input_shape=(28 * 28,)))
+    # network.add(layers.Dense(512, activation='relu', input_shape=(28 * 28,)))
     network.add(layers.Dense(10, activation='softmax'))
 
     network.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -375,17 +392,19 @@ def problem_4(train_images, train_labels_original, test_images, test_labels_orig
                           validation_data=(test_images, test_labels))
     return history
 
-#adding new features to problem 4
+
+# adding new features to problem 4
 def problem_5(train_images, train_labels_original, test_images, test_labels_original):
+    print("improving problem 4 by adding new features:")
     number_of_components_4_ways_train = np.zeros(len(train_images))
     number_of_components_8_ways_train = np.zeros(len(train_images))
     number_of_components_4_ways_test = np.zeros(len(test_images))
     number_of_components_8_ways_test = np.zeros(len(test_images))
     p = Pool(16)
     number_of_components_4_ways_train = p.map(number_of_regions_4_ways, train_images)
-    number_of_components_4_ways_test = p.map(number_of_regions_4_ways,test_images)
+    number_of_components_4_ways_test = p.map(number_of_regions_4_ways, test_images)
     print("number of components computed (4 neighbors)")
-    number_of_components_8_ways_train= p.map(number_of_regions_8_ways, train_images)
+    number_of_components_8_ways_train = p.map(number_of_regions_8_ways, train_images)
     number_of_components_8_ways_test = p.map(number_of_regions_8_ways, test_images)
 
     print("number of components computed (8 neighbors)")
@@ -419,7 +438,7 @@ def problem_5(train_images, train_labels_original, test_images, test_labels_orig
     problem_4(new_train_images, train_labels_original, new_test_images, test_labels_original)
 
 
-#preparing the input and executes all problems
+# preparing the input and executes all problems
 def mnist_classifier():
     # loading mnist data
     (train_images_original, train_labels_original), (test_images_original, test_labels_original) = mnist.load_data()
@@ -430,10 +449,10 @@ def mnist_classifier():
 
     test_images = test_images_original.reshape((10000, 28 * 28))
     test_images = test_images.astype('float32') / 255
-    print("Problem 1's output:")
-    problem_1(train_images, train_labels_original, test_images, test_labels_original)
-    print("Problem 2's output:")
-    problem_2(train_images, train_labels_original, test_images, test_labels_original)
+    # print("Problem 1's output:")
+    # problem_1(train_images, train_labels_original, test_images, test_labels_original)
+    # print("Problem 2's output:")
+    # problem_2(train_images, train_labels_original, test_images, test_labels_original)
     print("Problem 3's output:")
     problem_3(train_images, train_labels_original, test_images, test_labels_original)
     print("Problem 4's output:")
