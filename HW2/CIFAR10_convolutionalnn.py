@@ -4,6 +4,11 @@ from tensorflow import keras
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.utils.np_utils import to_categorical
+from keras import layers
+from keras import models
+from keras import optimizers
+from keras.preprocessing.image import ImageDataGenerator
+
 
 
 # loading CIFAR10 data
@@ -29,64 +34,40 @@ training_set = train_images_shuffled[validation_set_size:]
 training_set_labels = train_labels_shuffled[validation_set_size:]
 
 
-# Examples of training set with their labels
-# cifar_classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
-# print('Example training images and their labels: ' + str([x[0] for x in training_set_labels[0:5]]))
-# print('Corresponding classes for the labels: ' + str([cifar_classes[x[0]] for x in training_set_labels[0:5]]))
-#
-# f, axarr = plt.subplots(1, 5)
-# f.set_size_inches(16, 6)
-#
-# for i in range(5):
-#     img = training_set[i]
-#     axarr[i].imshow(img)
-# plt.show()
-
 
 
 # one hot encoding of the labels
+train_labels_shuffled = to_categorical(train_labels_shuffled, num_classes=10)
 training_set_labels = to_categorical(training_set_labels, num_classes=10)
 test_labels = to_categorical(test_labels, num_classes=10)
 validation_set_labels = to_categorical(validation_set_labels, num_classes=10)
 
-print("--------------------First Architecture--------------------")
+train_datagen = ImageDataGenerator(
+        width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
+        height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+        horizontal_flip=True)   # flip images horizontally
 
-model = keras.Sequential([
-    keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),
-    keras.layers.MaxPooling2D((2, 2)),
-    #
-    keras.layers.Conv2D(64, (3, 3), activation='relu'),
-    keras.layers.MaxPooling2D((2, 2)),
-    #
-    keras.layers.Conv2D(64, (3, 3), activation='relu'),
-    #
-    keras.layers.Flatten(),
-    keras.layers.Dense(64, activation='relu'),
-    keras.layers.Dense(10, activation='softmax')
-])
-model.summary()
+validation_datagen = ImageDataGenerator()
 
+train_generator = train_datagen.flow(training_set, training_set_labels, batch_size=32)
+validation_generator = validation_datagen.flow(validation_set,validation_set_labels, batch_size=32)
 
-model.compile(optimizer='adam',
-                 loss='categorical_crossentropy',
-                 metrics=['accuracy'])
-
-
-def history(training_data, training_data_labels, validation_data, validation_data_labels, epochs, batch_size):
+# training function
+def history(model, training_data, training_data_labels, validation_data, validation_data_labels, epochs, batch_size):
     history = model.fit(training_data, training_data_labels,
                           epochs=epochs, batch_size=batch_size,
                           validation_data=(validation_data, validation_data_labels))
     return history
 
 
-
-def plot(history, epochs):
+# plotting loss and accuracy corresponding to the validation set
+def plot_validation(history, epochs):
     history_dict = history.history
     loss_values = history_dict['loss']
     test_loss_values = history_dict['val_loss']
     epochs_range = range(1, epochs + 1)
     plt.plot(epochs_range, loss_values, 'bo', label='Training loss')
-    plt.plot(epochs_range, test_loss_values, 'ro', label='Test loss')
+    plt.plot(epochs_range, test_loss_values, 'ro', label='validation')
     plt.title('Training and test loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
@@ -103,7 +84,92 @@ def plot(history, epochs):
     plt.legend()
     plt.show()
 
-plot(history(training_set, training_set_labels, validation_set,validation_set_labels, 10, 64),10)
+# plotting loss and accuracy corresponding to the test set
+def plot_test(history, epochs):
+    history_dict = history.history
+    loss_values = history_dict['loss']
+    test_loss_values = history_dict['val_loss']
+    epochs_range = range(1, epochs + 1)
+    plt.plot(epochs_range, loss_values, 'bo', label='non-test loss')
+    plt.plot(epochs_range, test_loss_values, 'ro', label='test loss')
+    plt.title('non-test and test loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
+
+    acc_values = history_dict['acc']
+    test_acc_values = history_dict['val_acc']
+    plt.plot(epochs_range, acc_values, 'bo', label='non-test accuracy')
+    plt.plot(epochs_range, test_acc_values, 'ro', label='test accuracy')
+    plt.title('non-test and test accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.show()
+#plot(history(training_set, training_set_labels, validation_set,validation_set_labels, 10, 64),10)
+
+print("--------------------First Architecture--------------------")
+
+# model_1 = models.Sequential()
+# model_1.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+# model_1.add(layers.MaxPooling2D((2, 2)))
+# model_1.add(layers.Conv2D(64, (3, 3), activation='relu'))
+# model_1.add(layers.MaxPooling2D((2, 2)))
+# model_1.add(layers.Conv2D(64, (3, 3), activation='relu'))
+# #
+# model_1.add(layers.Flatten())
+# # DROPOUT
+# model_1.add(layers.Dropout(0.5))
+# model_1. add(layers.Dense(256, activation='relu'))
+# model_1. add(layers.Dense(10, activation='softmax'))
+#
+# model_1.summary()
+#
+#
+# model_1.compile(optimizer='rmsprop',
+#                  loss='categorical_crossentropy',
+#                  metrics=['accuracy'])
 
 print("--------------------Second Architecture--------------------")
+
+model_2 = models.Sequential()
+model_2.add(layers.Conv2D(16, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+model_2.add(layers.MaxPooling2D((2, 2)))
+model_2.add(layers.Conv2D(32, (3, 3), activation='relu'))
+model_2.add(layers.MaxPooling2D((2, 2)))
+model_2.add(layers.Conv2D(32, (3, 3), activation='relu'))
+#
+model_2.add(layers.Flatten())
+# DROPOUT
+model_2.add(layers.Dropout(0.5))
+model_2.add(layers.Dense(512, activation='relu'))
+model_2.add(layers.Dense(10, activation='softmax'))
+
+model_2.summary()
+
+
+model_2.compile(optimizer='rmsprop',
+                 loss='categorical_crossentropy',
+                 metrics=['accuracy'])
+
+#plot(history(training_set, training_set_labels, validation_set,validation_set_labels,20, 64),20)
+#score = model.evaluate(validation_set, validation_set_labels, batch_size=128, verbose=0)
+
+def history_data_aug(model, validation_set, training_set):
+    history = model.fit_generator(train_generator,
+                        validation_data=validation_generator,
+                        validation_steps=len(validation_set) / 32,
+                        steps_per_epoch=len(training_set) / 32,
+                        epochs=15,  verbose=2)
+    return history
+
+#history_data_aug(validation_set, training_set)
+
+plot_validation(history(model_2,training_set, training_set_labels, validation_set,validation_set_labels,50, 64),50)
+
+#print(score)
+#plot_test(history(train_images_shuffled, train_labels_shuffled, test_images,test_labels,50, 64),50)
+
+#score = model.evaluate(training_set, y_test, batch_size=128)
 
