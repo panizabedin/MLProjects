@@ -59,7 +59,20 @@ def history(model, training_data, training_data_labels, validation_data, validat
                           validation_data=(validation_data, validation_data_labels))
     return history
 
+def history_data_aug(model, training_set, training_set_labels, validation_set, validation_set_labels,epochs):
+    train_datagen = ImageDataGenerator(
+        width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
+        height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+        horizontal_flip=True)  # flip images horizontally
 
+    validation_datagen = ImageDataGenerator()
+
+    train_generator = train_datagen.flow(training_set, training_set_labels, batch_size=32)
+    validation_generator = validation_datagen.flow(validation_set, validation_set_labels, batch_size=32)
+    history = model.fit_generator(train_generator, validation_data=validation_generator,
+                                    validation_steps=len(training_set) / 32, steps_per_epoch=len(training_set) / 32,
+                                    epochs=epochs, verbose=2)
+    return history
 # plotting loss and accuracy corresponding to the validation set
 def plot_validation(history, epochs):
     history_dict = history.history
@@ -153,20 +166,53 @@ model_2.compile(optimizer='rmsprop',
                  loss='categorical_crossentropy',
                  metrics=['accuracy'])
 
+print("--------------------Third Architecture with data augmentation--------------------")
+
+model_3 = models.Sequential()
+model_3.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+model_3.add(layers.MaxPooling2D((2, 2)))
+model_3.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model_3.add(layers.MaxPooling2D((2, 2)))
+model_3.add(layers.Conv2D(64, (3, 3), activation='relu'))
+#
+model_3.add(layers.Flatten())
+# DROPOUT
+#model_3.add(layers.Dropout(0.5))
+model_3.add(layers.Dense(512, activation='relu'))
+model_3.add(layers.Dense(10, activation='softmax'))
+
+model_3.summary()
+
+
+model_3.compile(optimizer='rmsprop',
+                 loss='categorical_crossentropy',
+                 metrics=['accuracy'])
+
+train_datagen = ImageDataGenerator(
+    width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
+    height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+    horizontal_flip=True)  # flip images horizontally
+
+validation_datagen = ImageDataGenerator()
+
+train_generator = train_datagen.flow(training_set, training_set_labels, batch_size=32)
+validation_generator = validation_datagen.flow(validation_set, validation_set_labels, batch_size=32)
+history_dataaug = model_3.fit_generator(train_generator, validation_data=validation_generator,
+                                validation_steps=len(training_set) / 32, steps_per_epoch=len(training_set) / 32,
+                                epochs=30, verbose=2)
+
 #plot(history(training_set, training_set_labels, validation_set,validation_set_labels,20, 64),20)
 #score = model.evaluate(validation_set, validation_set_labels, batch_size=128, verbose=0)
 
-def history_data_aug(model, validation_set, training_set):
-    history = model.fit_generator(train_generator,
-                        validation_data=validation_generator,
-                        validation_steps=len(validation_set) / 32,
-                        steps_per_epoch=len(training_set) / 32,
-                        epochs=15,  verbose=2)
-    return history
+
 
 #history_data_aug(validation_set, training_set)
 
-plot_validation(history(model_2,training_set, training_set_labels, validation_set,validation_set_labels,50, 64),50)
+# model_2 results
+#plot_validation(history(model_2,training_set, training_set_labels, validation_set,validation_set_labels,50, 64),50)
+
+#model_3 results
+plot_validation(history_dataaug)
 
 #print(score)
 #plot_test(history(train_images_shuffled, train_labels_shuffled, test_images,test_labels,50, 64),50)
