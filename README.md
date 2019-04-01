@@ -7,3 +7,12 @@
 [Problem 4 and Problem 5](https://colab.research.google.com/drive/1x5GCF102w7f4upbtkcFYZY-8GgyU7HYK)
 
 [All the problems together in one colab notebook](https://colab.research.google.com/drive/1Ee8L7LbO7XObIu-MNWuuJXHFqylpIBDe)
+
+## HW2 Jupiter Notebooks:
+
+   [Training on Different Architectures](MLProjects/HW2/HW_2.ipynb)
+   
+      
+   [K- Fold Validation](MLProjects/HW2/HW_2_K_fold.ipynb)
+      
+
