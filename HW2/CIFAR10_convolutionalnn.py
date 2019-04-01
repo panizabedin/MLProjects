@@ -101,26 +101,31 @@ def plot_test(history, epochs):
 #plot(history(training_set, training_set_labels, validation_set,validation_set_labels, 10, 64),10)
 
 print("--------------------First Architecture--------------------")
-
-# model_1 = models.Sequential()
-# model_1.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
-# model_1.add(layers.MaxPooling2D((2, 2)))
-# model_1.add(layers.Conv2D(64, (3, 3), activation='relu'))
-# model_1.add(layers.MaxPooling2D((2, 2)))
-# model_1.add(layers.Conv2D(64, (3, 3), activation='relu'))
-# #
-# model_1.add(layers.Flatten())
-# # DROPOUT
-# model_1.add(layers.Dropout(0.5))
-# model_1. add(layers.Dense(256, activation='relu'))
-# model_1. add(layers.Dense(10, activation='softmax'))
+# model = models.Sequential()
+# #layers
+# #1
+# model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
+# model.add(layers.MaxPooling2D((2, 2)))
+# #2
+# model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+# model.add(layers.MaxPooling2D((2, 2)))
+# #3
+# model.add(layers.Conv2D(64, (3, 3), activation='relu'))
 #
-# model_1.summary()
+# model.add(layers.Flatten())
+# model. add(layers.Dense(256, activation='relu'))
+# model. add(layers.Dense(10, activation='softmax'))
+#
+# model.summary()
 #
 #
-# model_1.compile(optimizer='rmsprop',
+# model.compile(optimizer='rmsprop',
 #                  loss='categorical_crossentropy',
 #                  metrics=['accuracy'])
+
+
+
+#plot_validation(history(model,training_set, training_set_labels, validation_set,validation_set_labels,10, 64),10)
 
 # print("--------------------Second Architecture with Dropout--------------------")
 #
@@ -181,26 +186,26 @@ print("--------------------First Architecture--------------------")
 # history_dataaug_model3 = model_3.fit_generator(train_generator, validation_data=validation_generator,
 #                                 validation_steps=len(training_set) / 32, steps_per_epoch=len(training_set) / 32,
 #                                 epochs=30, verbose=2)
+
+
+# print("--------------------fourth Architecture with dropout and strides--------------------")
 #
-
-print("--------------------fourth Architecture with dropout and strides--------------------")
-
-model_4 = models.Sequential()
-model_4.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (32, 32, 3)))
-model_4.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
-model_4.add(layers.Conv2D(64, (3, 3), activation = 'relu', strides = 2))
-model_4.add(layers.Conv2D(64, (3, 3), activation = 'relu'))
-model_4.add(layers.Conv2D(128, (3, 3), activation = 'relu', strides=2))
-model_4.add(layers.Conv2D(128, (3, 3), activation = 'relu'))
-model_4.add(layers.Flatten())
-model_4.add(layers.Dropout(0.5))
-model_4.add(layers.Dense(128, activation = 'relu'))
-model_4.add(layers.normalization.BatchNormalization())
-model_4.add(layers.Dense(10, activation = 'softmax'))
-
-model_4.compile(optimizer='rmsprop',
-                 loss='categorical_crossentropy',
-                 metrics=['accuracy'])
+# model_4 = models.Sequential()
+# model_4.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (32, 32, 3)))
+# model_4.add(layers.Conv2D(32, (3, 3), activation = 'relu'))
+# model_4.add(layers.Conv2D(64, (3, 3), activation = 'relu', strides = 2))
+# model_4.add(layers.Conv2D(64, (3, 3), activation = 'relu'))
+# model_4.add(layers.Conv2D(128, (3, 3), activation = 'relu', strides=2))
+# model_4.add(layers.Conv2D(128, (3, 3), activation = 'relu'))
+# model_4.add(layers.Flatten())
+# model_4.add(layers.Dropout(0.5))
+# model_4.add(layers.Dense(128, activation = 'relu'))
+# model_4.add(layers.normalization.BatchNormalization())
+# model_4.add(layers.Dense(10, activation = 'softmax'))
+#
+# model_4.compile(optimizer='rmsprop',
+#                  loss='categorical_crossentropy',
+#                  metrics=['accuracy'])
 
 #print("--------------------Fifth Architecture with data augmentation and dropout-------------------")
 
@@ -235,7 +240,71 @@ model_4.compile(optimizer='rmsprop',
 # validation_generator = validation_datagen.flow(validation_set, validation_set_labels, batch_size=32)
 # history_dataaug_model5 = model_5.fit_generator(train_generator, validation_data=validation_generator,
 #                                 validation_steps=len(training_set) / 32, steps_per_epoch=len(training_set) / 32,
-#                                 epochs=30, verbose=2)
+#                                 epochs=30, verbose=2)'
+
+# training the data on both training and validation set with the best architecture above (arch 5), then testing on the test data
+print("--------------------Winner : Fifth Architecture with data augmentation and dropout-------------------")
+
+model_winner = models.Sequential()
+#CNN layers
+#1
+model_winner.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (32, 32, 3)))
+#2
+model_winner.add(layers.Conv2D(64, (3, 3), activation = 'relu'))
+#3
+model_winner.add(layers.Conv2D(64, (3, 3), activation = 'relu', strides = 2))
+#4
+model_winner.add(layers.Conv2D(64, (3, 3), activation = 'relu'))
+#5
+model_winner.add(layers.Conv2D(128, (3, 3), activation = 'relu', strides=2))
+#6
+model_winner.add(layers.Conv2D(128, (3, 3), activation = 'relu'))
+model_winner.add(layers.Dropout(0.5))
+
+
+#Dense layers
+model_winner.add(layers.Flatten())
+model_winner.add(layers.Dropout(0.5))
+model_winner.add(layers.Dense(256, activation = 'relu'))
+model_winner.add(layers.normalization.BatchNormalization())
+model_winner.add(layers.Dense(10, activation = 'softmax'))
+
+model_winner.summary()
+
+
+model_winner.compile(optimizer='rmsprop',
+                 loss='categorical_crossentropy',
+                 metrics=['accuracy'])
+
+train_datagen2= ImageDataGenerator(
+    width_shift_range=0.2,  # randomly shift images horizontally (fraction of total width)
+    height_shift_range=0.2,# randomly shift images vertically (fraction of total height)
+    shear_range=0.2,
+    horizontal_flip=True)  # flip images horizontally
+
+validation_datagen2 = ImageDataGenerator()
+
+# train_generator2 = train_datagen2.flow(train_images_shuffled, train_labels_shuffled, batch_size=32)
+# validation_generator2= validation_datagen2.flow(test_images, test_labels, batch_size=32)
+
+# history_dataaug_model = model_winner.fit_generator(
+#     train_generator2,
+#     steps_per_epoch=30,
+#     epochs=30,
+#     validation_data=validation_generator2,
+#     validation_steps=50
+# )
+#
+
+train_generator2 = train_datagen2.flow(train_images_shuffled, train_labels_shuffled, batch_size=32)
+validation_generator2 = validation_datagen2.flow(test_images, test_labels, batch_size=32)
+history_dataaug_model = model_winner.fit_generator(train_generator2, validation_data=validation_generator2,
+                                validation_steps=len(train_images_shuffled) / 32, steps_per_epoch=len(train_images_shuffled) / 32,
+                                epochs=30, verbose=2)
+
+#model_5 results
+plot_test(history_dataaug_model,30)
+
 
 #score = model.evaluate(validation_set, validation_set_labels, batch_size=128, verbose=0)
 
@@ -247,7 +316,7 @@ model_4.compile(optimizer='rmsprop',
 #plot_validation(history(model_2,training_set, training_set_labels, validation_set,validation_set_labels,20, 64),20)
 
 # model_4 results
-plot_validation(history(model_4,training_set, training_set_labels, validation_set,validation_set_labels,10, 64),10)
+#plot_validation(history(model_4,training_set, training_set_labels, validation_set,validation_set_labels,10, 64),10)
 #score = model_4.evaluate(validation_set, validation_set_labels, batch_size=64, verbose=0)
 
 

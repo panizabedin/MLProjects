@@ -34,8 +34,9 @@ test_labels = to_categorical(test_labels, num_classes=10)
 
 def fold(model, training_set, training_labels, validation_set, validation_set_labels):
     train_datagen = ImageDataGenerator(
-        width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
-        height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+        width_shift_range=0.2,  # randomly shift images horizontally
+        height_shift_range=0.2,  # randomly shift images vertically
+        shear_range=0.2,        # randomly shear images
         horizontal_flip=True)  # flip images horizontally
 
     validation_datagen = ImageDataGenerator()
@@ -45,10 +46,11 @@ def fold(model, training_set, training_labels, validation_set, validation_set_la
     history_dataaug_model5 = model.fit_generator(train_generator, validation_data=validation_generator,
                                                  validation_steps=len(training_set) / 32,
                                                  steps_per_epoch=len(training_set) / 32,
-                                                 epochs=30, verbose=2)
+                                                 epochs=20, verbose=2)
 
-    score = model.evaluate(validation_set, validation_set_labels, batch_size=128, verbose=0)
-    return score
+    score = model.evaluate(validation_set, validation_set_labels, batch_size=32, verbose=0)
+
+    return score[1]
 
 
 def k_fold_validation(training_set, training_labels, n):
@@ -61,7 +63,9 @@ def k_fold_validation(training_set, training_labels, n):
     model_5.add(layers.Conv2D(64, (3, 3), activation='relu'))
     model_5.add(layers.Conv2D(128, (3, 3), activation='relu', strides=2))
     model_5.add(layers.Conv2D(128, (3, 3), activation='relu'))
+
     model_5.add(layers.Flatten())
+
     model_5.add(layers.Dropout(0.5))
     model_5.add(layers.Dense(64, activation='relu'))
     model_5.add(layers.normalization.BatchNormalization())
@@ -75,15 +79,21 @@ def k_fold_validation(training_set, training_labels, n):
 
     fold_size = math.floor(len(training_set) / n)
     for i in range(n):
+        print("---------- Fold", i+1, "----------")
         fold_validation_set = training_set[i * fold_size:i * fold_size + fold_size]
         fold_validation_set_labels = training_labels[i * fold_size:i * fold_size + fold_size]
         fold_training_set = np.delete(training_set, slice(i * fold_size, i * fold_size + fold_size), axis=0)
         fold_training_labels = np.delete(training_labels, slice(i * fold_size, i * fold_size + fold_size), axis=0)
+        s = fold(model_5, fold_training_set, fold_training_labels, fold_validation_set, fold_validation_set_labels)
 
-        scores = scores.append(
-            fold(model_5, fold_training_set, fold_training_labels, fold_validation_set, fold_validation_set_labels))
+        scores.append(s)
 
     print(scores)
 
+    scores_average = np.average(scores)
+    print("Average scores =", scores_average)
+
 
 k_fold_validation(train_images_shuffled, train_labels_shuffled, 5)
+
+
