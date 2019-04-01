@@ -8,7 +8,7 @@
 
 [All the problems together in one colab notebook](https://colab.research.google.com/drive/1Ee8L7LbO7XObIu-MNWuuJXHFqylpIBDe)
 
-## HW2 Jupiter Notebooks:
+## HW2 Jupyter Notebooks:
 
    [Training on Different Architectures](https://github.com/panizabedin/MLProjects/blob/master/HW2/HW_2.ipynb)
    
