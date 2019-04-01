@@ -10,9 +10,9 @@
 
 ## HW2 Jupiter Notebooks:
 
-   [Training on Different Architectures](MLProjects/HW2/HW_2.ipynb)
+   [Training on Different Architectures](https://github.com/panizabedin/MLProjects/blob/master/HW2/HW_2.ipynb)
    
       
-   [K- Fold Validation](MLProjects/HW2/HW_2_K_fold.ipynb)
+   [K- Fold Validation](https://github.com/panizabedin/MLProjects/blob/master/HW2/HW_2_K_fold.ipynb)
       
 
