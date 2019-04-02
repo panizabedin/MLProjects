@@ -91,7 +91,7 @@ def k_fold_validation(training_set, training_labels, n):
     print(scores)
 
     scores_average = np.average(scores)
-    print("Average scores =", scores_average)
+    print("Average score =", scores_average)
 
 
 k_fold_validation(train_images_shuffled, train_labels_shuffled, 5)
