@@ -175,9 +175,9 @@ print("--------------------First Architecture--------------------")
 #                  metrics=['accuracy'])
 #
 # train_datagen = ImageDataGenerator(
-#     width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
-#     height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
-#     horizontal_flip=True)  # flip images horizontally
+#     width_shift_range=0.1,
+#     height_shift_range=0.1,
+#     horizontal_flip=True)
 #
 # validation_datagen = ImageDataGenerator()
 #
@@ -210,15 +210,26 @@ print("--------------------First Architecture--------------------")
 #print("--------------------Fifth Architecture with data augmentation and dropout-------------------")
 
 # model_5 = models.Sequential()
-# model_5.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (32, 32, 3)))
-# model_5.add(layers.Conv2D(64, (3, 3), activation = 'relu'))
-# model_5.add(layers.Conv2D(64, (3, 3), activation = 'relu', strides = 2))
-# model_5.add(layers.Conv2D(64, (3, 3), activation = 'relu'))
-# model_5.add(layers.Conv2D(128, (3, 3), activation = 'relu', strides=2))
-# model_5.add(layers.Conv2D(128, (3, 3), activation = 'relu'))
+# #CNN layers
+# #1
+# model_5.add(layers.Conv2D(128, (3, 3), activation = 'relu', input_shape = (32, 32, 3)))
+# #2
+# model_5.add(layers.Conv2D(256, (3, 3), activation = 'relu'))
+# #3
+# model_5.add(layers.Conv2D(256, (3, 3), activation = 'relu', strides = 2))
+# #4
+# model_5.add(layers.Conv2D(256, (3, 3), activation = 'relu'))
+# #5
+# model_5.add(layers.Conv2D(512, (3, 3), activation = 'relu', strides=2))
+# #6
+# model_5.add(layers.Conv2D(512, (3, 3), activation = 'relu'))
+#
+# #Dense layers
 # model_5.add(layers.Flatten())
+# #Dropout
 # model_5.add(layers.Dropout(0.5))
-# model_5.add(layers.Dense(64, activation = 'relu'))
+# model_5.add(layers.Dense(256, activation = 'relu'))
+# #batch normalization added
 # model_5.add(layers.normalization.BatchNormalization())
 # model_5.add(layers.Dense(10, activation = 'softmax'))
 #
@@ -230,10 +241,11 @@ print("--------------------First Architecture--------------------")
 #                  metrics=['accuracy'])
 #
 # train_datagen = ImageDataGenerator(
-#     width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
-#     height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
-#     horizontal_flip=True)  # flip images horizontally
-#
+#     rotation_range=10,
+#     width_shift_range=0.2,
+#     height_shift_range=0.2,
+#     shear_range=0.2,
+#     horizontal_flip=True)
 # validation_datagen = ImageDataGenerator()
 #
 # train_generator = train_datagen.flow(training_set, training_set_labels, batch_size=32)
@@ -248,18 +260,17 @@ print("--------------------Winner : Fifth Architecture with data augmentation an
 model_winner = models.Sequential()
 #CNN layers
 #1
-model_winner.add(layers.Conv2D(32, (3, 3), activation = 'relu', input_shape = (32, 32, 3)))
+model_winner.add(layers.Conv2D(128, (3, 3), activation = 'relu', input_shape = (32, 32, 3)))
 #2
-model_winner.add(layers.Conv2D(64, (3, 3), activation = 'relu'))
+model_winner.add(layers.Conv2D(256, (3, 3), activation = 'relu'))
 #3
-model_winner.add(layers.Conv2D(64, (3, 3), activation = 'relu', strides = 2))
+model_winner.add(layers.Conv2D(256, (3, 3), activation = 'relu', strides = 2))
 #4
-model_winner.add(layers.Conv2D(64, (3, 3), activation = 'relu'))
+model_winner.add(layers.Conv2D(256, (3, 3), activation = 'relu'))
 #5
-model_winner.add(layers.Conv2D(128, (3, 3), activation = 'relu', strides=2))
+model_winner.add(layers.Conv2D(512, (3, 3), activation = 'relu', strides=2))
 #6
-model_winner.add(layers.Conv2D(128, (3, 3), activation = 'relu'))
-model_winner.add(layers.Dropout(0.5))
+model_winner.add(layers.Conv2D(512, (3, 3), activation = 'relu'))
 
 
 #Dense layers
@@ -276,25 +287,26 @@ model_winner.compile(optimizer='rmsprop',
                  loss='categorical_crossentropy',
                  metrics=['accuracy'])
 
-train_datagen2= ImageDataGenerator(
-    width_shift_range=0.2,  # randomly shift images horizontally (fraction of total width)
-    height_shift_range=0.2,# randomly shift images vertically (fraction of total height)
+train_datagen2 = ImageDataGenerator(
+    rotation_range=10,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
     shear_range=0.2,
-    horizontal_flip=True)  # flip images horizontally
+    horizontal_flip=True)
 
 validation_datagen2 = ImageDataGenerator()
 
-# train_generator2 = train_datagen2.flow(train_images_shuffled, train_labels_shuffled, batch_size=32)
-# validation_generator2= validation_datagen2.flow(test_images, test_labels, batch_size=32)
+train_generator2 = train_datagen2.flow(train_images_shuffled, train_labels_shuffled, batch_size=32)
+validation_generator2= validation_datagen2.flow(test_images, test_labels, batch_size=32)
 
-# history_dataaug_model = model_winner.fit_generator(
-#     train_generator2,
-#     steps_per_epoch=30,
-#     epochs=30,
-#     validation_data=validation_generator2,
-#     validation_steps=50
-# )
-#
+history_dataaug_model = model_winner.fit_generator(
+    train_generator2,
+    steps_per_epoch=30,
+    epochs=30,
+    validation_data=validation_generator2,
+    validation_steps=50
+)
+
 
 train_generator2 = train_datagen2.flow(train_images_shuffled, train_labels_shuffled, batch_size=32)
 validation_generator2 = validation_datagen2.flow(test_images, test_labels, batch_size=32)
