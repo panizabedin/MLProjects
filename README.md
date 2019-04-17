@@ -15,7 +15,7 @@
       
    [K- Fold Validation](https://github.com/panizabedin/MLProjects/blob/master/HW2/HW_2_K_fold.ipynb)
    
-## HW1 Colab Notebooks:
+## HW3 Colab Notebooks:
       
   [All the problems together in one colab notebook](https://colab.research.google.com/drive/1ynbFSDy5x5LIOlXFVAbXACwVLH44ibVs)
 
