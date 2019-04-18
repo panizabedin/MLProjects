@@ -19,4 +19,4 @@
       
   [All the problems together in one colab notebook](https://colab.research.google.com/drive/1ynbFSDy5x5LIOlXFVAbXACwVLH44ibVs)
 
-
+ [Problem 3 by using VGG19 directly](https://colab.research.google.com/drive/14kKfMceLZrSR6uvbGzlvLdbFGQnV8kpV)
